@@ -1,5 +1,7 @@
 #lang mzscheme
 
+;(load "../Libs/basic.ss")
+
 (define-syntax assert
   (syntax-rules ()
     ((_ test-exp correct-ans)
@@ -9,6 +11,28 @@
                    'test-exp
                    observed-ans
                    correct-ans))))))
+(define (list-length l)
+  (define (f l c)
+    (cond
+      ((null? l) c)
+      (else (f (cdr l) (+ 1 c)))))
+  (f l 0))
+(define (nth-element l n)
+  (cond
+    ((zero? n) (car l))
+    (else (nth-element (cdr l) (- n 1)))))
+(assert (nth-element '(1 2 3) 0) 1)
+(assert (nth-element '(1 2 3) 1) 2)
+(assert (nth-element '(1 2 3) 2) 3)
+(define (remove-first c l)
+  (cond
+    ((null? l) l)
+    ((eq? (car l) c) (cdr l))
+    (else (cons (car l) (remove-first c (cdr l))))))
+(assert (remove-first 'a '(a b c)) '(b c))
+(assert (remove-first 'b '(e f g)) '(e f g))
+(assert (remove-first 'a4 '(c1 a4 c1 a4)) '(c1 c1 a4))
+(assert (remove-first 'a '()) '())
 
 (define (in-s? n)
   (cond
@@ -18,13 +42,22 @@
 (assert (in-s? 4) #f)
 (assert (in-s? 6) #t)
 
-(define (listofint? l)
+(define (listofpred? pred l)
   (cond
-    ((eq? '() l) #t)
+    ((null? l) #t)
     (else
-     (and (integer? (car l))
-          (listofint? (cdr l))))))
+     (and (pred (car l))
+          (listofpred? pred (cdr l))))))
+
+(define (listofint? l)
+  (listofpred? integer? l))
 (assert (listofint? '(1 2 3 4 5 6 7)) #t)
+
+(define (listofsymbol? l)
+  (listofpred? symbol? l))
+(assert (listofsymbol? '(a b c d e f g h i j k)) #t)
+(assert (listofsymbol? '(a b c d e 2 3 4 5 6 7)) #f)
+
 
 (define (s-exp? s)
   (cond
@@ -32,7 +65,7 @@
     (else (s-list? s))))
 (define (s-list? s)
   (cond
-    ((eq? '() s) #t)
+    ((null? s) #t)
     (else (and
            (s-exp? (car s))
            (s-exp? (cdr s))))))
@@ -55,10 +88,7 @@
                     (bar 1 (foo 1 2))
                     (biz 4 5))) #t)
 
-(define (list-length l)
-  (cond
-    ((eq? '() l) 0)
-    (else (+ 1 (list-length (cdr l))))))
+
 
 (define (lc-exp? s)
   (define (identifier? s)
@@ -74,7 +104,7 @@
           ((and
              (= 2 lth)
              (lc-exp? (car s))
-             (lc-exp? (car (cdr s)))) #t)
+             (lc-exp? (cadr s))) #t)
            ((and
              (= 3 lth)
              (eq? 'lambda (car s))
@@ -82,5 +112,16 @@
              (lc-exp? (caddr s))) #t)
            (else #f)))))
     (else #f)))
+;(assert (lc-exp? '(lambda (x) (+ 5))) #t)
 
-(assert (lc-exp? '(lambda (x) (+ x 5))) #t)
+(define (subst n o s-list)
+  (cond
+    ((symbol? s-list) (if (eq? o s-list) n s-list))
+    ((null? s-list) '())
+    (else
+     (cons
+      (subst n o (car s-list))
+      (subst n o (cdr s-list))))))
+(s-list? '((b c) (b () d)))
+(assert (subst 'a 'b '((b c) (b () d))) '((a c) (a () d)))
+

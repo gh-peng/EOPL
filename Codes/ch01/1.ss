@@ -108,7 +108,7 @@
            ((and
              (= 3 lth)
              (eq? 'lambda (car s))
-             (identifier? (caadr s))
+             (identifier? (caadr s))4
              (lc-exp? (caddr s))) #t)
            (else #f)))))
     (else #f)))
@@ -124,4 +124,21 @@
       (subst n o (cdr s-list))))))
 (s-list? '((b c) (b () d)))
 (assert (subst 'a 'b '((b c) (b () d))) '((a c) (a () d)))
+(define (number-elements-from lst n)
+  (define (f lst n r)
+    (cond
+      ((null? lst) r)
+      (else
+       (f (cdr lst) (+ n 1) (append r (list (list n (car lst))))))))
+  (f lst n '()))
+(assert (number-elements-from '(v0 v1 v2) 0) '((0 v0) (1 v1) (2 v2)))
+(define (list-sum loi)
+  (define (f loi r)
+    (cond
+      ((null? loi) r)
+      (else
+       (f (cdr loi) (+ r (car loi))))))
+  (f loi 0))
+(assert (list-sum '(1 2 3 4 5 6 7 8 9 10)) 55)
+
 

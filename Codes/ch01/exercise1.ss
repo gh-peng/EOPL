@@ -227,3 +227,74 @@
       (sort/predicate pred (f (lambda (x) (not (pred x (car loi)))) (cdr loi)))))))
 (assert (sort/predicate < '(8 2 5 2 3)) '(2 2 3 5 8))
 (assert (sort/predicate > '(8 2 5 2 3)) '(8 5 3 2 2))
+
+(define (bintree? t)
+  (cond
+    ((list? t) (and
+                (symbol? (car t))
+                (bintree? (car (cdr t)))
+                (bintree? (car (cdr (cdr t))))))
+    ((integer? t) #t)
+    (else #f)))
+
+(define (fun-tree t fun)
+  (cond
+    ((list? t)
+     (list (car t)
+           (fun-tree (cadr t) fun)
+           (fun-tree (caddr t) fun)))
+    (else (fun t))))
+(define (double-tree t)
+  (fun-tree t (lambda (x) (if (list? x) x (* 2 x)))))
+
+
+(assert
+ (double-tree '(root
+                (left0 1 2)
+                (right0 2 3)))
+ '(root
+   (left0 2 4)
+   (right0 4 6)))
+(define (interior-node l r s)
+  (list l r s))
+(define (leaf n)
+  n)
+(define (mark-leaves-with-red-depth t)
+  (define (f t d)
+    (cond
+      ((list? t)
+       (let ((nd (if (eq? 'red (car t)) (+ 1 d) d)))
+         (list (car t)
+                (f (cadr t) nd)
+                (f (caddr t) nd))))
+       (else d)))
+  (f t 0))
+(assert
+ (mark-leaves-with-red-depth
+  (interior-node 'red
+                 (interior-node 'bar
+                                (leaf 26)
+                                (leaf 12))
+                 (interior-node 'red
+                                (leaf 11)
+                                (interior-node 'quux
+                                               (leaf 117)
+                                               (leaf 14)))))
+ '(red
+   (bar 1 1)
+   (red 2 (quux 2 2))))
+
+(define (path n bst)
+  (define (f bst)
+    (cond
+      ((null? bst) #f)
+      ((= n (car bst)) '())
+      ((< n (car bst)) (cons 'left (f (cadr bst))))
+      (else (cons 'right (f (caddr bst))))))
+  (f bst))
+
+(assert
+ (path 17 '(14 (7 () (12 () ())) (26 (20 (17 () ())
+                                         ())
+                                     (31 () ()))))
+ '(right left left))
